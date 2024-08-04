@@ -2,6 +2,9 @@ from flask import Flask, request, redirect, url_for, render_template, send_from_
 from docx import Document
 from docx.oxml.ns import qn
 import os
+import json
+
+from controllers.vocab import extract_vocabulary_data
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'custom_upload_folder'
@@ -32,23 +35,35 @@ def upload_file():
 def handle_upload():
     if 'file' not in request.files:
         return redirect(request.url)
+    
     file = request.files['file']
     if file.filename == '':
         return redirect(request.url)
+    
     if file and file.filename.endswith('.docx'):
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
         file.save(file_path)
         
-        # Process the uploaded Word document
-        doc = Document(file_path)
-        text = "\n".join([para.text for para in doc.paragraphs])
+        try:
+            # Process the uploaded Word document
+            doc = Document(file_path)
+            vocab_data = extract_vocabulary_data(file_path)  # Assume this function returns processed data
+            
+            # Extract and save images
+            images = extract_images(doc, app.config['IMAGES_FOLDER'])
+            
+            # Generate HTML to display text and images
+            text = "\n".join([para.text for para in doc.paragraphs])
+            images_html = ''.join([f'<img src="{url_for("uploaded_file", filename=os.path.basename(img))}" />' for img in images])
+            
+            # Optionally save vocabulary data as JSON
+            with open(os.path.join(app.config['UPLOAD_FOLDER'], 'vocabulary_data.json'), 'w') as json_file:
+                json.dump(vocab_data, json_file, indent=4)
+            
+            return f'<pre>{text}</pre><br>{images_html}'
         
-        # Extract and save images
-        images = extract_images(doc, app.config['IMAGES_FOLDER'])
-        
-        # Generate HTML to display text and images
-        images_html = ''.join([f'<img src="{url_for("uploaded_file", filename=os.path.basename(img))}" />' for img in images])
-        return f'<pre>{text}</pre><br>{images_html}'
+        except Exception as e:
+            return f'An error occurred: {e}'
     
     return 'Invalid file format. Please upload a Word document.'
 
