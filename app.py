@@ -12,7 +12,7 @@ if not os.path.exists(app.config['UPLOAD_FOLDER']):
 def upload_file():
     return render_template('upload.html')
 
-@app.route('/upload', method = 'POST')
+@app.route('/upload', methods = ['POST'])
 def handle_upload():
     if 'file' not in request.files:
         return redirect(request.url)

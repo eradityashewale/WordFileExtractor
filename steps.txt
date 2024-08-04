@@ -1,2 +1,4 @@
 1. Install necessary files flask and python-docx
 2. Create flask app and create upload folder
+3. Create upload.html where to upload file on frontend
+4. Create function upload_handle to handle file and read text
