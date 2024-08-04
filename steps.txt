@@ -1,0 +1,2 @@
+1. Install necessary files flask and python-docx
+2. Create flask app and create upload folder
